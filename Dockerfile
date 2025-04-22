@@ -1,4 +1,4 @@
-# hadolint global ignore DL3008
+# hadolint global ignore=DL3008
 FROM debian:12-slim AS build 
 
 RUN apt-get update && \
