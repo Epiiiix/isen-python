@@ -24,22 +24,26 @@ jobs:
         run: |
           docker push ${{ vars.DOCKERHUB_USERNAME }}/myapp:dev-${{ github.sha }}
 
-  trivy-scan:
-    runs-on: ubuntu-latest
+  security-scan:
     needs: docker
-    continue-on-error: true
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Install Trivy
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget
-          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.1_Linux-64bit.deb
-          sudo dpkg -i trivy_0.50.1_Linux-64bit.deb
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
+        with:
+          image-ref: "${{ vars.DOCKERHUB_USERNAME }}/myapp:dev-${{ github.sha }}"
+          format: "template"
+          template: "@/contrib/sarif.tpl"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
+          continue-on-error: true
 
-      - name: Docker login
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ vars.DOCKERHUB_USERNAME }}" --password-stdin
-
-      - name: Scan Docker image with Trivy
-        run: |
-          trivy image --severity HIGH,CRITICAL --no-progress ${{ vars.DOCKERHUB_USERNAME }}/myapp:dev-${{ github.sha }}
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "trivy-results.sarif"
