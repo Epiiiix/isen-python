@@ -44,3 +44,35 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "trivy-results.sarif"
+  sbom:
+    name: Generate and Scan SBOM
+    needs: docker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate SBOM with Syft
+        uses: anchore/sbom-action@v0.15.10
+        with:
+          source: "dir:${{ github.workspace }}"
+          format: "syft-json"
+          output-file: "sbom.syft.json"
+
+      - name: Upload SBOM as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.syft.json
+
+      - name: Scan SBOM with Grype
+        uses: anchore/scan-action@v3
+        with:
+          sbom: sbom.syft.json
+
+      - name: Upload Grype scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: grype-report
+          path: grype.sarif
