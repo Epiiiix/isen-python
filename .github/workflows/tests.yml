@@ -4,15 +4,16 @@ on: [push, pull_request]
 
 jobs:
   unit-tests:
-    name: 🧪 Run Unit Tests
+    name: Unit Tests
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.10"
+          python-version: "3.9"
 
       - name: Install dependencies
         run: |
@@ -25,15 +26,16 @@ jobs:
           pytest unit_tests
 
   integration-tests:
-    name: 🔗 Run Integration Tests
+    name: Integration Tests
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
-          python-version: "3.10"
+          python-version: "3.9"
 
       - name: Install dependencies
         run: |
