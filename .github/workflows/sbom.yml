@@ -1,4 +1,4 @@
-name: SBOM Generation and Scan
+name: Sbom
 
 on: [push, pull_request]
 
@@ -14,9 +14,16 @@ jobs:
       - name: Generate SBOM from project directory
         uses: anchore/sbom-action@v0
         with:
-          source: dir:.
+          path: .
           format: syft-json
           output-file: sbom.syft.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-files
+          path: sbom.syft.json
+          retention-days: 90
 
   sbom-scan:
     name: Scan SBOM with Grype
@@ -27,16 +34,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Download SBOM artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: sbom-files
+          path: ./sbom
+
       - name: Install Grype
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
 
       - name: Run Grype scan on SBOM
         run: |
-          grype sbom:sbom.syft.json -o table > grype-report.txt
-          grype sbom:sbom.syft.json -o sarif > grype-report.sarif
+          grype sbom:./sbom/sbom.syft.json -o table > grype-report.txt
+          grype sbom:./sbom/sbom.syft.json -o sarif > grype-report.sarif
 
-      - name: Upload Grype report
+      - name: Upload Grype report as artifact
         uses: actions/upload-artifact@v4
         with:
           name: grype-reports
@@ -45,7 +58,7 @@ jobs:
             grype-report.sarif
           retention-days: 90
 
-      - name: Upload to GitHub Security tab
+      - name: Upload Grype report to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: grype-report.sarif
