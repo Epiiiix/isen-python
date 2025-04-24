@@ -1,0 +1,19 @@
+name: Bandit
+
+on: [push, pull_request]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Bandit (no report)
+        run: |
+          pip install bandit
+          bandit -r . --exclude unit_tests,integration_tests --quiet --exit-zero
