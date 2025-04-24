@@ -27,20 +27,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download SBOM artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: sbom
-          path: ./sbom
-
       - name: Install Grype
         run: |
           curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
 
       - name: Run Grype scan on SBOM
         run: |
-          grype sbom:./sbom/sbom.syft.json -o table > grype-report.txt
-          grype sbom:./sbom/sbom.syft.json -o sarif > grype-report.sarif
+          grype sbom:sbom.syft.json -o table > grype-report.txt
+          grype sbom:sbom.syft.json -o sarif > grype-report.sarif
 
       - name: Upload Grype report
         uses: actions/upload-artifact@v4
