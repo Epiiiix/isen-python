@@ -11,27 +11,30 @@ def create_products():
     Product.objects.create(name="Product 3", price=100.00)
 
 
+@pytest.fixture
+def client():
+    """Fixture to provide a client instance."""
+    return Client()
+
+
 @pytest.mark.django_db
-def test_filter_by_price_range(create_products):
+def test_filter_by_price_range(client, create_products):
     """
     Testing if the price range filter works correctly.
     The products are filtered by the min_price and max_price query parameters.
     """
-    client = Client()
     response = client.get(reverse('home'), {'min_price': 60, 'max_price': 120})
 
     assert response.status_code == 200
-
     assert 'Product 3' in [product.name for product in response.context['object_list']]
 
 
 @pytest.mark.django_db
-def test_sort_ascending(create_products):
+def test_sort_ascending(client, create_products):
     """
     Testing if the products are sorted in ascending order by price.
     The query parameter 'sort=asc' is used to sort the products in ascending order.
     """
-    client = Client()
     response = client.get(reverse('home'), {'sort': 'asc'})
 
     assert response.status_code == 200
@@ -43,12 +46,11 @@ def test_sort_ascending(create_products):
 
 
 @pytest.mark.django_db
-def test_sort_descending(create_products):
+def test_sort_descending(client, create_products):
     """
     Testing if the products are sorted in descending order by price.
     The query parameter 'sort=desc' is used to sort the products in descending order.
     """
-    client = Client()
     response = client.get(reverse('home'), {'sort': 'desc'})
 
     assert response.status_code == 200
