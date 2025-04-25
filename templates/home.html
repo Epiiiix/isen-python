@@ -31,6 +31,24 @@
         <div class="divider-custom-icon"><i class="fas fa-star"></i></div>
         <div class="divider-custom-line"></div>
       </div>
+      <!-- Filter Form -->
+      <form method="get" class="text-center mb-4">
+        <div class="form-inline justify-content-center">
+          <label for="min_price" class="mr-2">Min Price:</label>
+          <input type="number" name="min_price" id="min_price" class="form-control mx-2" value="{{ request.GET.min_price|default:'' }}">
+
+          <label for="max_price" class="mr-2">Max Price:</label>
+          <input type="number" name="max_price" id="max_price" class="form-control mx-2" value="{{ request.GET.max_price|default:'' }}">
+
+          <select name="sort" class="form-control mx-2">
+            <option value="">Sort by</option>
+            <option value="asc" {% if request.GET.sort == "asc" %}selected{% endif %}>Ascending</option>
+            <option value="desc" {% if request.GET.sort == "desc" %}selected{% endif %}>Descending</option>
+          </select>
+
+          <button type="submit" class="btn btn-primary mx-2">Apply</button>
+        </div>
+      </form>
       <!-- Portfolio Grid Items-->
       <div class="row justify-content-center">
         {% for product in object_list %}
