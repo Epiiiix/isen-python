@@ -1,0 +1,39 @@
+name: Cypress E2E Tests using Cypress Docker Image
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+    container:
+      image: cypress/included:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run Django server in background
+        run: |
+          python manage.py migrate
+          python manage.py runserver 0.0.0.0:8080 &
+
+      - name: Wait for server to be ready
+        run: sleep 10
+
+      - name: Run Cypress tests
+        run: |
+          cypress run
