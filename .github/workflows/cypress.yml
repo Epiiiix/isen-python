@@ -1,4 +1,4 @@
-name: Cypress E2E Tests using Cypress Docker Image
+name: Cypress E2E Tests
 
 on:
   push:
@@ -11,8 +11,7 @@ on:
 jobs:
   cypress-run:
     runs-on: ubuntu-latest
-    container:
-      image: cypress/included:latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,14 +25,24 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Cypress
+        run: |
+          npm install cypress
+
       - name: Run Django server in background
         run: |
           python manage.py migrate
           python manage.py runserver 0.0.0.0:8080 &
 
-      - name: Wait for server to be ready
-        run: sleep 10
+      - name: Waiting for the server to be ready
+        run: |
+          sleep 10
 
       - name: Run Cypress tests
         run: |
-          cypress run
+          npx cypress run
