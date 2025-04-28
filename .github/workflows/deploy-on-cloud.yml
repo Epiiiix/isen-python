@@ -10,12 +10,12 @@ on:
       - main
 
 env:
-  DOCKER_IMAGE: ${{vars.DOCKERHUB_USERNAME}}/myapp:dev-${{ github.sha }}
-  GCP_IMAGE: europe-west1-docker.pkg.dev/iron-wave-457510-e1/isen-python/myapp:v1
+  DOCKER_IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/myapp:dev-${{ github.sha }}
+  GCP_IMAGE: europe-west1-docker.pkg.dev/iron-wave-457510-e1/isen-python/myapp:dev-${{ github.sha }}
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -23,10 +23,10 @@ jobs:
       id-token: "write"
 
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: actions/checkout@v4
 
       - name: Authenticate to Google Cloud
-        uses: "google-github-actions/auth@v2"
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: "${{ secrets.GOOGLE_CLOUD_KEY }}"
 
@@ -37,22 +37,22 @@ jobs:
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ vars.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: "Pull image from Docker Hub"
+      - name: Pull image from Docker Hub
         run: |
           docker pull ${{ env.DOCKER_IMAGE }}
 
-      - name: "Tag image for Artifact Registry"
+      - name: Tag image for Artifact Registry
         run: |
           docker tag ${{ env.DOCKER_IMAGE }} ${{ env.GCP_IMAGE }}
 
-      - name: "Push image to Artifact Registry"
+      - name: Push image to Artifact Registry
         run: |
           docker push ${{ env.GCP_IMAGE }}
 
-      - id: "deploy"
-        uses: "google-github-actions/deploy-cloudrun@v2"
+      - id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
         with:
-          service: "my-cloud-run-service"
+          service: my-cloud-run-service
           image: ${{ env.GCP_IMAGE }}
           region: europe-west1
           allow-unauthenticated: true
