@@ -1,0 +1,48 @@
+name: Deploy to Cloud Run
+
+on:
+  workflow_run:
+    workflows: ["Build, Push and Scan Docker Image"]
+    types:
+      - completed
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - uses: "actions/checkout@v4"
+
+      - name: "Authenticate to Google Cloud"
+        run: |
+          echo ${{ secrets.GOOGLECLOUD_KEY }} | docker login -u _json_key --password-stdin https://europe-west1-docker.pkg.dev
+
+      - name: "Pull image from Docker Hub"
+        run: |
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/myapp:dev-${{ github.sha }}
+
+      - name: "Tag image for Artifact Registry"
+        run: |
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/myapp:dev-${{ github.sha }} europe-west1-docker.pkg.dev/iron-wave-457510-e1/isen-python/myapp:v1
+
+      - name: "Push image to Artifact Registry"
+        run: |
+          docker push europe-west1-docker.pkg.dev/iron-wave-457510-e1/isen-python/myapp:v1
+
+      - id: "deploy"
+        uses: "google-github-actions/deploy-cloudrun@v2"
+        with:
+          service: "my-cloud-run-service"
+          image: "europe-west1-docker.pkg.dev/iron-wave-457510-e1/isen-python/myapp:v1"
+
+      - name: "Use output"
+        run: |
+          echo "Deployed app available at: ${{ steps.deploy.outputs.url }}"
+          curl "${{ steps.deploy.outputs.url }}"
